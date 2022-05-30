@@ -11,17 +11,17 @@ type wordsCount struct {
 	count int
 }
 
+var re = regexp.MustCompile(`[,.!?:;"'()\s]+-*\s*`)
+
 func Top10(text string) []string {
 	woCoMap := make(map[string]int)
 	woCoSls := make([]wordsCount, 0, len(woCoMap))
 	fin := 10
 	ans := make([]string, 0, fin)
-	var unSignedText []string
 	if len(text) == 0 {
 		return ans
 	}
-	re := regexp.MustCompile(`[,.!?:;"'()\s]+-*\s*`)
-	unSignedText = re.Split(text, -1)
+	unSignedText := re.Split(text, -1)
 	for _, word := range unSignedText { // counts the number of occurrences of words
 		woCoMap[strings.ToLower(word)]++
 	}
