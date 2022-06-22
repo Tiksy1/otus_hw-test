@@ -21,77 +21,64 @@ func NewList() List {
 }
 
 type list struct {
-	items *ListItem
+	front  *ListItem
+	back   *ListItem
+	length int
 }
 
-func (l *list) Len() int {
-	var i int
-	firstItem := l.Front()
-	for firstItem != nil {
-		firstItem = firstItem.Next
-		i++
-	}
-	return i
+func (l list) Len() int {
+	return l.length
 }
 
-func (l *list) Front() *ListItem {
-	if l.items == nil {
-		return nil
-	}
-	for l.items.Prev != nil {
-		l.items = l.items.Prev
-	}
-	return l.items
+func (l list) Front() *ListItem {
+	return l.front
 }
 
-func (l *list) Back() *ListItem {
-	if l.items == nil {
-		return nil
-	}
-	for l.items.Next != nil {
-		l.items = l.items.Next
-	}
-	return l.items
+func (l list) Back() *ListItem {
+	return l.back
 }
 
 func (l *list) PushFront(v interface{}) *ListItem {
-	item := new(ListItem)
-	item.Value = v
-	if firstItem := l.Front(); firstItem == nil {
-		l.items = item
+	if l.front == nil {
+		l.front = &ListItem{Value: v}
+		l.back = l.front
 	} else {
-		item.Next = firstItem
-		firstItem.Prev = item
-		item.Prev = nil
+		l.front.Prev = &ListItem{Value: v, Next: l.front, Prev: nil}
+		l.front = l.front.Prev
 	}
-	return item
+	l.length++
+	return l.front
 }
 
 func (l *list) PushBack(v interface{}) *ListItem {
-	item := new(ListItem)
-	item.Value = v
-	if lastItem := l.Back(); lastItem == nil {
-		l.items = item
+	if l.front == nil {
+		l.front = &ListItem{Value: v}
+		l.back = l.front
 	} else {
-		item.Prev = lastItem
-		lastItem.Next = item
-		item.Next = nil
+		l.back.Next = &ListItem{Value: v, Next: nil, Prev: l.back}
+		l.back = l.back.Next
 	}
-	return item
+	l.length++
+	return l.back
 }
 
 func (l *list) Remove(i *ListItem) {
-	if i.Prev != nil {
-		i.Prev.Next = i.Next
-		l.items = i.Prev
+	if i == nil {
+		return
 	}
 	if i.Next != nil {
 		i.Next.Prev = i.Prev
-		l.items = i.Next
+	} else {
+		l.back = i.Prev
 	}
-	if i.Next == nil && i.Prev == nil {
-		l.items = nil
+	if i.Prev != nil {
+		i.Prev.Next = i.Next
+	} else {
+		l.front = i.Next
 	}
+	i.Next = nil
+	i.Prev = nil
+	l.length--
 }
 
 func (l *list) MoveToFront(i *ListItem) {
