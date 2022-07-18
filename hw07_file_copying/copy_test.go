@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"testing"
@@ -61,7 +62,7 @@ func TestCopy(t *testing.T) {
 }
 
 func TestNoPermToFile(t *testing.T) {
-	err := Copy(fromPathTest, "/dev/urandom", 0, 0)
+	err := Copy("/dev/urandom", toFile, 0, 0)
 
-	require.Error(t, err)
+	require.Equal(t, true, errors.Is(err, ErrUnsupportedFile))
 }
