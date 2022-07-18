@@ -83,7 +83,7 @@ func (bar *Bar) NewOption(start, total int64) {
 		bar.graph = "█"
 	}
 	bar.percent = bar.getPercent()
-	for i := 0; i < int(bar.percent); i += 2 {
+	for i := 0; i < int(bar.percent); i += 20 {
 		bar.rate += bar.graph // initial progress position
 	}
 }
@@ -99,9 +99,9 @@ func (bar *Bar) Play(cur int64) {
 	if bar.percent != last && bar.percent%2 == 0 {
 		bar.rate += bar.graph
 	}
-	fmt.Printf("\r[%-50s]%3d%% %8d/%d", bar.rate, bar.percent, bar.cur, bar.total)
+	fmt.Printf("\r[%s]%3d%% %8d/%d", bar.rate, bar.percent, bar.cur, bar.total)
 }
 
 func (bar *Bar) Finish() {
-	fmt.Println("\nКопирование завершено")
+	fmt.Print("\nКопирование завершено\n\n")
 }
