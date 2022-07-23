@@ -22,6 +22,7 @@ func RunCmd(cmd []string, env Environment) (returnCode int) {
 	execCmd := exec.Command(cmd0, cmd[1:]...)
 	execCmd.Stdin = os.Stdin
 	execCmd.Stdout = os.Stdout
+	execCmd.Stderr = os.Stderr
 	if err := execCmd.Run(); err != nil {
 		fmt.Println(err)
 		return -1
