@@ -1,5 +1,5 @@
-//go:build bench
-// +build bench
+//go:build !bench
+// +build !bench
 
 package hw10programoptimization
 
@@ -18,7 +18,6 @@ var data = `{"Id":1,"Name":"Howard Mendoza","Username":"0Oliver","Email":"aliqui
 {"Id":5,"Name":"Janice Rose","Username":"KeithHart","Email":"nulla@Linktype.com","Phone":"146-91-01","Password":"acSBF5","Address":"Russell Trail 61"}`
 
 func TestGetDomainStat(t *testing.T) {
-
 	t.Run("find 'com'", func(t *testing.T) {
 		result, err := GetDomainStat(bytes.NewBufferString(data), "com")
 		require.NoError(t, err)
