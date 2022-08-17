@@ -2,13 +2,15 @@ package hw09structvalidator
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 )
 
 type UserRole string
 
-// Test the function on different structures and other types.
 type (
 	User struct {
 		ID     string `json:"id" validate:"len:36"`
@@ -17,7 +19,7 @@ type (
 		Email  string   `validate:"regexp:^\\w+@\\w+\\.\\w+$"`
 		Role   UserRole `validate:"in:admin,stuff"`
 		Phones []string `validate:"len:11"`
-		meta   json.RawMessage
+		Meta   json.RawMessage
 	}
 
 	App struct {
@@ -38,23 +40,60 @@ type (
 
 func TestValidate(t *testing.T) {
 	tests := []struct {
-		in          interface{}
-		expectedErr error
+		in              interface{}
+		expectedValErrs []error
 	}{
 		{
-			// Place your code here.
+			in: User{
+				ID:     "100",
+				Name:   "testName",
+				Age:    15,
+				Email:  "mail@test_mail.ru",
+				Role:   "stuff",
+				Phones: []string{"4321", "1234567890"},
+				Meta:   nil,
+			},
+			expectedValErrs: []error{ErrorLength, ErrorMin, ErrorLength, ErrorLength},
 		},
-		// ...
-		// Place your code here.
+		{
+			in: App{
+				Version: "123456",
+			},
+			expectedValErrs: []error{ErrorLength},
+		},
+		{
+			in:              Token{},
+			expectedValErrs: []error{nil},
+		},
+		{
+			in: Response{
+				Code: 200,
+				Body: "test",
+			},
+			expectedValErrs: []error{nil},
+		},
 	}
-
-	for i, tt := range tests {
+	for i, tc := range tests {
 		t.Run(fmt.Sprintf("case %d", i), func(t *testing.T) {
-			tt := tt
+			tc := tc
 			t.Parallel()
-
-			// Place your code here.
-			_ = tt
+			err := Validate(tc.in)
+			var valErrs ValidationErrors
+			if errors.As(err, &valErrs) {
+				for i, err := range tc.expectedValErrs {
+					require.ErrorIs(t, valErrs[i].Err, err, "Validation error should be like expected")
+				}
+			}
 		})
 	}
+
+	t.Run("Handle non struct value", func(t *testing.T) {
+		err := Validate(123)
+		require.ErrorIs(t, err, ErrorExpectedStruct, "Throw nonStruct error")
+	})
+
+	t.Run("Handle nil value", func(t *testing.T) {
+		err := Validate(nil)
+		require.ErrorIs(t, err, ErrorExpectedStruct, "Throw nonStruct error")
+	})
 }
