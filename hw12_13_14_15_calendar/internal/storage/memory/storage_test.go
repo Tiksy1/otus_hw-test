@@ -80,12 +80,12 @@ func (m *MemStoreSuite) TestInsertNewEventSuccess() {
 
 	err := m.store.NewEvent(context.Background(), newEvent)
 
-	m.Require().NoError(err)
+	m.NoError(err)
 
 	saved := m.store.events["6"]
 
-	m.Require().NotNil(saved)
-	m.Require().Equal(newEvent.Title, saved.Title)
+	m.NotNil(saved)
+	m.Equal(newEvent.Title, saved.Title)
 }
 
 func (m *MemStoreSuite) TestInsertNewEventWithFail() {

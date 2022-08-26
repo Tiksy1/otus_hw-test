@@ -10,7 +10,7 @@ import (
 
 	"github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/config"
 	"github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/logger"
-	"github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/server/http"
+	internalhttp "github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/server/http"
 )
 
 var configFile string
