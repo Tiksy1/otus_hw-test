@@ -42,7 +42,7 @@ func sendErrorJSON(w http.ResponseWriter, r *http.Request, httpStatusCode int, e
 	sendJSON(w, r, resp)
 }
 
-func sendDataJSON(w http.ResponseWriter, r *http.Request, httpStatusCode int, data interface{}) {
+func sendDataJSON(w http.ResponseWriter, r *http.Request, httpStatusCode int, data interface{}) { //nolint: unparam
 	resp := response{Data: data, Error: nil}
 	status(r, httpStatusCode)
 	sendJSON(w, r, resp)
