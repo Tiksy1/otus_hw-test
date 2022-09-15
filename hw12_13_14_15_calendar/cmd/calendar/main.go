@@ -6,11 +6,16 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"sync"
 	"time"
 
+	"github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/app"
 	"github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/config"
 	"github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/logger"
-	internalhttp "github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/server/http"
+	"github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/server/grpcsrv"
+	"github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/server/rest"
+	memorystorage "github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/storage/memory"
+	sqlstorage "github.com/Tiksy1/otus_hw-test/hw12_13_14_15_calendar/internal/storage/sql"
 )
 
 var configFile string
@@ -40,7 +45,10 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	server := internalhttp.NewServer(internalhttp.NewTempPublic(logg), cfg.HTTPServer.Host, cfg.HTTPServer.Port, logg)
+	var conf config.Config
+	calendar := app.New(logg, startStorageService(ctx, conf.Database))
+	restServer := rest.NewServer(rest.NewAPI(calendar), conf.RestServer.Host, conf.RestServer.Port, logg)
+	grpcServer := grpcsrv.NewServer(grpcsrv.NewAPI(calendar), conf.GrpcServer.Host, conf.GrpcServer.Port, logg)
 
 	go func() {
 		signals := make(chan os.Signal, 1)
@@ -53,17 +61,57 @@ func main() {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*3)
 		defer cancel()
 
-		logg.Info("stopping server...")
-		if err := server.Stop(ctx); err != nil {
-			logg.Error("failed to stop http server: " + err.Error())
+		logg.Info("stopping rest server...")
+		if err := restServer.Stop(ctx); err != nil {
+			logg.Error("failed to stop rest server: " + err.Error())
+		}
+
+		logg.Info("stopping gRPC server...")
+		if err := grpcServer.Stop(); err != nil {
+			logg.Error("failed to stop gRPC server: " + err.Error())
 		}
 	}()
 
 	logg.Info("calendar is running...")
+	var wg sync.WaitGroup
 
-	logg.Info("starting server at " + server.Address)
-	if err := server.Start(ctx); err != nil {
-		logg.Error("failed to start http server: " + err.Error())
-		os.Exit(1) // nolint: gocritic
+	wg.Add(2)
+	go func() {
+		defer wg.Done()
+		startRESTServer(ctx, restServer, logg)
+	}()
+
+	go func() {
+		defer wg.Done()
+		startGRPCServer(ctx, grpcServer, logg)
+	}()
+	wg.Wait()
+}
+
+func startRESTServer(ctx context.Context, s *rest.Server, logg app.Logger) {
+	logg.Info("starting REST server at " + s.Address)
+	if err := s.Start(ctx); err != nil {
+		log.Fatalf("failed to start rest server: " + err.Error())
 	}
+}
+
+func startGRPCServer(ctx context.Context, s *grpcsrv.Server, logg app.Logger) {
+	logg.Info("starting gRPC server at " + s.Address)
+	if err := s.Start(ctx); err != nil {
+		log.Fatalf("failed to start gRPC server: " + err.Error())
+	}
+}
+
+func startStorageService(ctx context.Context, config config.DBConf) app.Storage {
+	var s app.Storage
+	if config.InMem {
+		s = memorystorage.New()
+	} else {
+		sqlStore, err := sqlstorage.New(ctx, config.Username, config.Password, config.Address, config.DBName)
+		if err != nil {
+			log.Fatalf("failed to start storage connection: " + err.Error())
+		}
+		s = sqlStore
+	}
+	return s
 }

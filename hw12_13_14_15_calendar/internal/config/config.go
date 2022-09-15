@@ -8,7 +8,8 @@ import (
 
 type Config struct {
 	Logger     LoggerConf `json:"logger"`
-	HTTPServer HTTPConf   `json:"server"`
+	RestServer RestConf   `json:"rest_server"`
+	GrpcServer GrpcConf   `json:"grpc_server"`
 	Database   DBConf     `json:"database"`
 }
 
@@ -29,17 +30,23 @@ func NewConfig(filePath string) (Config, error) {
 
 type LoggerConf struct {
 	Level    int8   `json:"level"`
-	FilePath string `json:"file_path"` // nolint: tagliatelle
+	FilePath string `json:"file_path"`
 }
 
-type HTTPConf struct {
+type RestConf struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
+}
+
+type GrpcConf struct {
 	Host string `json:"host"`
 	Port string `json:"port"`
 }
 
 type DBConf struct {
+	InMem    bool   `json:"in_mem"`
 	Username string `json:"username"`
 	Password string `json:"password"`
 	Address  string `json:"address"`
-	DBName   string `json:"db_name"` // nolint: tagliatelle
+	DBName   string `json:"db_name"`
 }
