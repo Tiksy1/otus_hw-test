@@ -60,7 +60,6 @@ linters:
     - sqlclosecheck
     - staticcheck
     - stylecheck
-    - tagliatelle
     - thelper
     - typecheck
     - unconvert

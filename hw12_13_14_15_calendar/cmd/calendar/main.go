@@ -21,7 +21,7 @@ import (
 var configFile string
 
 func init() {
-	flag.StringVar(&configFile, "config", "./configs/config.json", "Path to configuration file")
+	flag.StringVar(&configFile, "config", "./configs/calendar.json", "Path to configuration file")
 }
 
 func main() {
@@ -32,7 +32,7 @@ func main() {
 		return
 	}
 
-	cfg, err := config.NewConfig(configFile)
+	cfg, err := config.NewCalendar(configFile)
 	if err != nil {
 		log.Fatalf("can't get config: %v", err)
 	}
@@ -45,10 +45,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	var conf config.Config
-	calendar := app.New(logg, startStorageService(ctx, conf.Database))
-	restServer := rest.NewServer(rest.NewAPI(calendar), conf.RestServer.Host, conf.RestServer.Port, logg)
-	grpcServer := grpcsrv.NewServer(grpcsrv.NewAPI(calendar), conf.GrpcServer.Host, conf.GrpcServer.Port, logg)
+	calendar := app.New(logg, startStorageService(ctx, cfg.Database))
+	restServer := rest.NewServer(rest.NewAPI(calendar), cfg.RestServer.Host, cfg.RestServer.Port, logg)
+	grpcServer := grpcsrv.NewServer(grpcsrv.NewAPI(calendar), cfg.GrpcServer.Host, cfg.GrpcServer.Port, logg)
 
 	go func() {
 		signals := make(chan os.Signal, 1)
@@ -102,12 +101,12 @@ func startGRPCServer(ctx context.Context, s *grpcsrv.Server, logg app.Logger) {
 	}
 }
 
-func startStorageService(ctx context.Context, config config.DBConf) app.Storage {
+func startStorageService(ctx context.Context, cfg config.DBConf) app.Storage {
 	var s app.Storage
-	if config.InMem {
+	if cfg.InMem {
 		s = memorystorage.New()
 	} else {
-		sqlStore, err := sqlstorage.New(ctx, config.Username, config.Password, config.Address, config.DBName)
+		sqlStore, err := sqlstorage.New(ctx, cfg.Username, cfg.Password, cfg.Address, cfg.DBName)
 		if err != nil {
 			log.Fatalf("failed to start storage connection: " + err.Error())
 		}
