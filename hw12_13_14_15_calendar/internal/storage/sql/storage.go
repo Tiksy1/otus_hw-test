@@ -29,12 +29,10 @@ func New(ctx context.Context, user, pass, addr, dbName string) (*EventDataStore,
 	if err != nil {
 		return nil, NewError("can't create db store", err)
 	}
-
 	err = db.PingContext(ctx)
 	if err != nil {
 		return nil, NewError("ping error", err)
 	}
-
 	return &EventDataStore{db: db}, nil
 }
 
@@ -47,21 +45,13 @@ func (s *EventDataStore) NewEvent(ctx context.Context, e app.Event) error {
 	if err != nil {
 		return err
 	}
-
 	if isExist {
 		return storage.ErrEventAlreadyExist
 	}
-
 	_, err = s.db.ExecContext(
 		ctx,
-		`INSERT event 
-    		SET id=?,
-    		    title=?,
-    		    start_date=FROM_UNIXTIME(?),
-    		    end_date=FROM_UNIXTIME(?),
-    		    description=?,
-    		    owner_id=?,
-    		    remind_in=?`,
+		`INSERT INTO event (id, title, start_date, end_date, description,  owner_id,  remind_in) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7)`,
 		e.ID,
 		e.Title,
 		e.StartDate,
@@ -81,21 +71,19 @@ func (s *EventDataStore) UpdateEvent(ctx context.Context, e app.Event) error {
 	if err != nil {
 		return err
 	}
-
 	if !isExist {
 		return storage.ErrEventDoesNotExist
 	}
-
 	_, err = s.db.ExecContext(
 		ctx,
 		`UPDATE event
-			SET title=?,
-    		    start_date=FROM_UNIXTIME(?), 
-    		    end_date=FROM_UNIXTIME(?), 
-    		    description=?, 
-    		    owner_id=?, 
-    		    remind_in=?
-			WHERE id=?`,
+			SET title=$1,
+    		    start_date=$2, 
+    		    end_date=$3, 
+    		    description=$4, 
+    		    owner_id=$5, 
+    		    remind_in=$6
+			WHERE id=$7`,
 		e.Title,
 		e.StartDate,
 		e.EndDate,
@@ -115,11 +103,9 @@ func (s *EventDataStore) RemoveEvent(ctx context.Context, id string) error {
 	if err != nil {
 		return err
 	}
-
 	if !isExist {
 		return storage.ErrEventDoesNotExist
 	}
-
 	_, err = s.db.ExecContext(ctx, "DELETE FROM event WHERE id=$1", id)
 	if err != nil {
 		return NewError("can't delete event from db", err)
@@ -134,13 +120,13 @@ func (s *EventDataStore) EventListFilterByStartDate(ctx context.Context, from in
 		&events,
 		`SELECT id, 
        			title, 
-       			UNIX_TIMESTAMP(start_date), 
-    		    UNIX_TIMESTAMP(end_date), 
+       			start_date, 
+    		    end_date, 
     		    description, 
     		    owner_id, 
     		    remind_in
 			FROM event
-			WHERE UNIX_TIMESTAMP(start_date) >=$1 AND UNIX_TIMESTAMP(start_date) <=$2`,
+			WHERE start_date >=$1 AND start_date <=$2`,
 		from, to,
 	)
 	if err != nil {
@@ -154,8 +140,7 @@ func (s *EventDataStore) EventListFilterByStartDate(ctx context.Context, from in
 
 func (s *EventDataStore) eventIsExist(ctx context.Context, id string) (bool, error) {
 	var count int
-
-	err := s.db.SelectContext(
+	err := s.db.GetContext(
 		ctx,
 		&count,
 		`SELECT COUNT(*)
@@ -169,8 +154,7 @@ func (s *EventDataStore) eventIsExist(ctx context.Context, id string) (bool, err
 		}
 		return false, NewError("can't get event", err)
 	}
-
-	return true, nil
+	return count > 0, nil
 }
 
 func (s *EventDataStore) EventListFilterByReminderIn(ctx context.Context, from int64, to int64) ([]app.Event, error) {
@@ -180,13 +164,13 @@ func (s *EventDataStore) EventListFilterByReminderIn(ctx context.Context, from i
 		&events,
 		`SELECT id, 
        			title, 
-       			UNIX_TIMESTAMP(start_date), 
-    		    UNIX_TIMESTAMP(end_date), 
+       			start_date, 
+    		    end_date, 
     		    description, 
     		    owner_id, 
     		    remind_in
 			FROM event
-			WHERE UNIX_TIMESTAMP(remind_in) >=$1 AND UNIX_TIMESTAMP(remind_in) <=$2`,
+			WHERE remind_in >=$1 AND remind_in <=$2`,
 		from, to,
 	)
 	if err != nil {

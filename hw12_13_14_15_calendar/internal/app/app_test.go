@@ -48,7 +48,7 @@ func (s *AppSuite) SetupTest() {
 	s.app = app.New(&mockLogger{}, s.mockStore)
 }
 
-func (s *AppSuite) TeardownTest() {
+func (s *AppSuite) TearDownTest() {
 	s.mockCtl.Finish()
 }
 

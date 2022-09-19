@@ -10,7 +10,6 @@ func declareChannel(cfg config.Rabbit, conn *amqp.Connection) (*amqp.Channel, er
 	if err != nil {
 		return nil, NewError("can't get channel", err)
 	}
-
 	err = channel.ExchangeDeclare(
 		cfg.ExchangeName,
 		cfg.ExchangeType,
@@ -23,6 +22,5 @@ func declareChannel(cfg config.Rabbit, conn *amqp.Connection) (*amqp.Channel, er
 	if err != nil {
 		return nil, NewError("can't declare exchange", err)
 	}
-
 	return channel, nil
 }
